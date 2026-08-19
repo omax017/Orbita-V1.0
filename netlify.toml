@@ -20,3 +20,19 @@
 # rotas server-rendered (quase todo o app, que usa cookies de sessão) dariam 404.
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Proxy de /api/* pro backend real (Railway) — mecanismo NATIVO da Netlify,
+# não o rewrites() do next.config.mjs (que também está configurado, só que
+# só funciona em dev local — na Netlify, o rewrite do Next.js pra um domínio
+# EXTERNO falha com 500 através da camada deles, testado e confirmado; o
+# redirect nativo da Netlify é o jeito documentado/suportado de fazer proxy
+# pra fora, e roda na borda ANTES de chegar no runtime do Next.js).
+#
+# ESSENCIAL pro cookie de sessão funcionar (não só CORS): sem isso, o browser
+# chamaria o Railway direto (domínio diferente do site) e o cookie httpOnly
+# ficaria preso lá — o Next.js na Netlify nunca o veria.
+[[redirects]]
+  from = "/api/*"
+  to = "https://orbita-v10-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
