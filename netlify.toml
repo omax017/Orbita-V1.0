@@ -1,0 +1,22 @@
+# Configuração de build da Netlify para o monorepo Órbita.
+#
+# Só o `apps/web` (Next.js) é hospedado aqui — `apps/api` (NestJS + worker do
+# BullMQ) precisa de processo Node contínuo, que a Netlify (serverless) não
+# sustenta. Ver ARCHITECTURE.md § 14.7/17 e README.md.
+
+[build]
+  base = "apps/web"
+  # `base = apps/web` já muda o diretório de trabalho — mas `pnpm install`
+  # continua resolvendo o monorepo inteiro corretamente (o pnpm sobe os
+  # diretórios até achar pnpm-workspace.yaml sozinho, não precisa rodar da raiz).
+  command = "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @hubwin/web build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Runtime oficial da Netlify pra Next.js (App Router, rotas dinâmicas,
+# middleware) — sem isso a Netlify só publicaria os arquivos estáticos e as
+# rotas server-rendered (quase todo o app, que usa cookies de sessão) dariam 404.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
