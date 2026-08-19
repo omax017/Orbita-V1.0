@@ -2,7 +2,12 @@ import "server-only";
 import { cookies } from "next/headers";
 import type { MeResponse } from "./auth/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+// `API_URL` (não `NEXT_PUBLIC_*`) de propósito — isso roda só no servidor
+// (chamada servidor-a-servidor pro backend real), nunca no browser, então
+// não precisa (nem deve) ir pro bundle do cliente. É o mesmo valor usado
+// como destino do rewrite em `next.config.mjs`; o browser em si nunca chama
+// essa URL diretamente (ver comentário lá e em `lib/api-client.ts`).
+const API_URL = process.env.API_URL ?? "http://localhost:3333";
 
 /**
  * Busca a sessão no servidor (Server Component), repassando os cookies da

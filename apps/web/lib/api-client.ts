@@ -1,5 +1,3 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -12,12 +10,15 @@ export class ApiError extends Error {
 
 /**
  * Wrapper fino sobre `fetch` para chamadas client-side à API NestJS.
- * `credentials: "include"` é obrigatório para o browser enviar os cookies
- * httpOnly de sessão (ver apps/api/src/auth) em requisições cross-port
- * (web:3000 -> api:3333 em dev).
+ * Caminho SEMPRE relativo (`/api/v1...`, nunca uma URL absoluta pra API) —
+ * o `rewrites()` do `next.config.mjs` proxya isso pro backend de verdade.
+ * Ver o comentário lá pra entender por quê isso importa pro cookie de sessão
+ * funcionar em produção (frontend e backend em domínios diferentes).
+ * `credentials: "include"` continua necessário pro browser enviar/receber o
+ * cookie httpOnly nessa chamada same-origin.
  */
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`/api/v1${path}`, {
     ...init,
     credentials: "include",
     headers: {

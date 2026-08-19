@@ -11,6 +11,9 @@ out/
 # turbo
 .turbo
 
+# TypeScript incremental build cache — regenera sozinho, só ruído no diff
+*.tsbuildinfo
+
 # env
 .env
 .env.local
