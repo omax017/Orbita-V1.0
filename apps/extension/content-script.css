@@ -1,0 +1,135 @@
+/* Reaproveita a paleta da identidade Órbita (ver apps/web/app/globals.css) —
+   hardcoded em hex aqui porque o content script roda isolado do app (sem
+   acesso às CSS custom properties do painel). */
+#orbita-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647; /* acima de qualquer coisa da página do marketplace */
+  font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+}
+
+#orbita-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6659ff 0%, #0891a6 100%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(102, 89, 255, 0.4);
+}
+
+#orbita-panel {
+  position: absolute;
+  bottom: 58px;
+  right: 0;
+  width: 300px;
+  background: #14151c;
+  color: #f5f6fa;
+  border: 1px solid #2a2c3b;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+#orbita-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2a2c3b;
+  font-size: 14px;
+}
+
+#orbita-panel header strong {
+  font-weight: 600;
+}
+
+#orbita-close {
+  background: none;
+  border: none;
+  color: #a6a8b8;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#orbita-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.orbita-title {
+  font-size: 12px;
+  color: #a6a8b8;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#orbita-cost-section,
+#orbita-analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2c3b;
+}
+
+#orbita-widget label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #a6a8b8;
+}
+
+#orbita-widget input {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #2a2c3b;
+  background: #1b1d28;
+  color: #f5f6fa;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+#orbita-widget button#orbita-save-cost,
+#orbita-widget button#orbita-analyze {
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: #6659ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.orbita-feedback {
+  margin: 0;
+  font-size: 12px;
+  color: #a6a8b8;
+}
+
+.orbita-feedback-success {
+  color: #30a46c;
+}
+
+.orbita-feedback-error {
+  color: #e23f6b;
+}
+
+#orbita-analysis-result {
+  font-size: 12px;
+}
+
+#orbita-analysis-result p {
+  margin: 2px 0;
+}

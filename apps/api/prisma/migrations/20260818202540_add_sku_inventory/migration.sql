@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "skus" ADD COLUMN     "lowStockThreshold" INTEGER NOT NULL DEFAULT 5,
+ADD COLUMN     "packagingCostAmount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "stockFull" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "stockLocal" INTEGER NOT NULL DEFAULT 0;

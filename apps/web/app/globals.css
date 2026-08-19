@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * Tokens no padrão shadcn/ui (HSL sem a função hsl(), para poder
+   * compor com opacidade via hsl(var(--x) / <alpha-value>) se precisar).
+   *
+   * Identidade visual "Órbita" (substituiu o tema laranja original —
+   * ver docs/identidade-visual.md para o racional completo da marca).
+   * Os NOMES dos tokens não mudaram (nenhum componente precisou ser
+   * reescrito) — só os VALORES, remapeados para a paleta índigo→ciano.
+   * Cores de marca (`--primary`) são as mesmas em claro/escuro por design
+   * (ver identidade-visual.md § 3); só os neutros (fundo/superfície/texto)
+   * e os status invertem contraste entre os dois modos.
+   *
+   * A Órbita usa dark mode como padrão do produto — o valor inicial
+   * vem de `defaultTheme="dark"` no ThemeProvider (next-themes, ver
+   * lib/providers.tsx) — mas o usuário pode alternar para claro no header;
+   * os tokens de :root (claro) e .dark (escuro) abaixo cobrem os dois.
+   *
+   * Convenção semântica de cor (usada em KpiCard, StatusBadge, gráficos):
+   *   --success (verde)    → valores positivos / lucro / crescimento
+   *   --destructive (rosa/vermelho) → valores negativos / erro / alerta crítico
+   *   --warning (âmbar)    → aviso / atenção (ex.: estoque baixo, ACOS alto)
+   *   --primary (índigo)   → cor de marca / ação principal / destaque neutro
+   */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 233 17% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 233 17% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 233 17% 9%;
+
+    --primary: 245 100% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 23% 95%;
+    --secondary-foreground: 233 17% 9%;
+
+    --muted: 240 23% 95%;
+    --muted-foreground: 235 11% 38%;
+
+    --accent: 245 100% 96%;
+    --accent-foreground: 245 100% 35%;
+
+    --destructive: 340 69% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 154 65% 33%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 40 100% 30%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 240 16% 90%;
+    --input: 240 16% 90%;
+    --ring: 245 100% 67%;
+
+    --sidebar: 240 23% 97%;
+    --sidebar-foreground: 233 17% 9%;
+    --sidebar-border: 240 16% 90%;
+
+    /* chart-1..5 validados com dataviz/scripts/validate_palette.js
+       (--pairs all, os 5 juntos) — ALL CHECKS PASS em light. chart-4/5 não
+       são literalmente brand-tertiary/status-warning do kit (que colidiam
+       de separação com o ciano) — ajustados pra passar CVD mantendo a
+       família de cor (verde/âmbar). */
+    --chart-1: 245 100% 67%;
+    --chart-2: 188 91% 34%;
+    --chart-3: 330 81% 60%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 40 100% 30%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 230 23% 5%;
+    --foreground: 228 33% 97%;
+
+    --card: 233 17% 9%;
+    --card-foreground: 228 33% 97%;
+
+    --popover: 233 17% 9%;
+    --popover-foreground: 228 33% 97%;
+
+    --primary: 245 100% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 231 19% 13%;
+    --secondary-foreground: 228 33% 97%;
+
+    --muted: 231 19% 13%;
+    --muted-foreground: 233 11% 69%;
+
+    --accent: 245 40% 18%;
+    --accent-foreground: 245 100% 75%;
+
+    --destructive: 344 74% 57%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 151 55% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 39 91% 39%;
+    --warning-foreground: 233 17% 9%;
+
+    --border: 233 17% 20%;
+    --input: 233 17% 20%;
+    --ring: 245 100% 67%;
+
+    --sidebar: 230 23% 5%;
+    --sidebar-foreground: 228 33% 92%;
+    --sidebar-border: 233 17% 16%;
+
+    /* chart-1..5 validados com dataviz/scripts/validate_palette.js
+       (--pairs all) contra a faixa OKLCH L 0.48–0.67 exigida em dark mode —
+       ALL CHECKS PASS. chart-5 (âmbar) é uma tonalidade diferente da
+       versão light (mais alaranjada) porque o âmbar original colidia com
+       o verde sob simulação de daltonismo (protan) nesse fundo escuro
+       especificamente — mesmo tipo de ajuste já feito em chart-2 nas
+       Etapas 3/6. */
+    --chart-1: 245 100% 67%;
+    --chart-2: 188 91% 34%;
+    --chart-3: 330 81% 60%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 26 90% 37%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-variant-numeric: tabular-nums; /* alinha números em tabelas e KPIs */
+  }
+
+  /* Títulos e números grandes de KPI usam a fonte de destaque da marca
+     (Space Grotesk) — aplicado nas tags de heading globalmente, em vez de
+     tocar cada uma das ~30 páginas que declaram "text-2xl font-semibold"
+     inline. `.font-sans` continua disponível pra quem precisa forçar Inter
+     dentro de um heading (raro). */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), var(--font-inter), sans-serif;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "hubwin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hubwin — plataforma de gestão de vendas para sellers de marketplace (Mercado Livre e Shopee).",
+  "packageManager": "pnpm@9.7.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore",
+    "db:generate": "pnpm --filter @hubwin/api prisma generate",
+    "db:migrate": "pnpm --filter @hubwin/api prisma migrate dev",
+    "db:studio": "pnpm --filter @hubwin/api prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

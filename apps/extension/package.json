@@ -1,0 +1,10 @@
+{
+  "name": "@hubwin/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Extensão de navegador (Chrome MV3) da Órbita — cadastro rápido de custo de SKU e análise de concorrentes a partir da página do anúncio.",
+  "scripts": {
+    "lint": "echo 'sem build step — extensão em JS puro, ver README.md'"
+  }
+}

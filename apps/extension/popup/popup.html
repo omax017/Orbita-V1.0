@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Órbita</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon-32.png" alt="" width="20" height="20" />
+      <strong>Órbita</strong>
+    </header>
+
+    <div id="logged-out" hidden>
+      <p class="hint">Entre com sua conta Órbita para cadastrar custos e disparar análises direto da página do anúncio.</p>
+      <label>E-mail<input id="email" type="email" placeholder="voce@loja.com" /></label>
+      <label>Senha<input id="password" type="password" placeholder="••••••••" /></label>
+      <button id="login-btn">Entrar</button>
+      <p id="login-error" class="error"></p>
+    </div>
+
+    <div id="logged-in" hidden>
+      <p class="hint">Conectado como <strong id="user-name"></strong>.</p>
+      <p class="hint">Vá até a página de um anúncio no Mercado Livre ou na Shopee — o botão "Ó" aparece no canto da tela.</p>
+      <button id="logout-btn" class="secondary">Sair</button>
+    </div>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>

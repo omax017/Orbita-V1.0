@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Órbita — Brand Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --radius-lg:16px; --radius-md:10px; --radius-sm:6px;
+  }
+  html[data-theme="dark"]{
+    --bg-base:#0A0B10; --surface-1:#14151C; --surface-2:#1B1D28; --border:#2A2C3B;
+    --text-primary:#F5F6FA; --text-secondary:#A6A8B8; --text-muted:#6E7086;
+    --status-good:#30A46C; --status-warning:#C08109; --status-critical:#E23F6B;
+    --status-good-bg:rgba(48,164,108,.14); --status-warning-bg:rgba(192,129,9,.16); --status-critical-bg:rgba(226,63,107,.14);
+    --grid-line:#20222E; --shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  html[data-theme="light"]{
+    --bg-base:#FFFFFF; --surface-1:#F7F7FA; --surface-2:#EFEFF5; --border:#E2E2EA;
+    --text-primary:#14151C; --text-secondary:#55576B; --text-muted:#8A8CA0;
+    --status-good:#1D8A5A; --status-warning:#9A6600; --status-critical:#C22458;
+    --status-good-bg:rgba(29,138,90,.10); --status-warning-bg:rgba(154,102,0,.10); --status-critical-bg:rgba(194,36,88,.10);
+    --grid-line:#ECECF2; --shadow:0 8px 24px rgba(20,21,28,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg-base); color:var(--text-primary);
+    font-family:'Inter',sans-serif; transition:background .25s ease, color .25s ease;
+    padding-bottom:80px;
+  }
+  .brand-primary{color:#6659FF;} .brand-secondary{color:#0891A6;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+  header.hero{
+    padding:56px 0 40px; border-bottom:1px solid var(--border);
+  }
+  .hero-top{display:flex; align-items:center; justify-content:space-between; gap:20px;}
+  .logo-lockup{display:flex; align-items:center; gap:14px;}
+  .logo-lockup .wordmark{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:28px; letter-spacing:-0.5px;}
+  .theme-toggle{
+    display:flex; align-items:center; gap:8px; background:var(--surface-1); border:1px solid var(--border);
+    border-radius:999px; padding:6px 6px; cursor:pointer; font-size:13px; color:var(--text-secondary);
+  }
+  .theme-toggle button{
+    border:none; background:transparent; color:inherit; font-family:inherit; font-size:13px; padding:6px 12px;
+    border-radius:999px; cursor:pointer; font-weight:600;
+  }
+  .theme-toggle button.active{background:linear-gradient(135deg,#6659FF,#0891A6); color:white;}
+  .tagline{margin-top:20px; font-size:19px; color:var(--text-secondary); max-width:560px; line-height:1.5;}
+  section{padding:48px 0; border-bottom:1px solid var(--border);}
+  h2.section-title{
+    font-family:'Space Grotesk',sans-serif; font-size:15px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-muted); margin:0 0 24px;
+  }
+  h3.sub{font-family:'Space Grotesk',sans-serif; font-size:16px; margin:32px 0 14px; color:var(--text-primary);}
+  .swatch-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;}
+  .swatch{
+    border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--surface-1);
+  }
+  .swatch-color{height:64px;}
+  .swatch-meta{padding:10px 12px;}
+  .swatch-meta .name{font-weight:600; font-size:13px;}
+  .swatch-meta .hex{font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+  .swatch-meta .use{font-size:11px; color:var(--text-secondary); margin-top:4px;}
+  .type-row{display:flex; align-items:baseline; gap:16px; padding:14px 0; border-bottom:1px dashed var(--border);}
+  .type-row:last-child{border-bottom:none;}
+  .type-label{width:110px; flex-shrink:0; font-size:12px; color:var(--text-muted); font-family:'Inter';}
+  .h1-sample{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:40px; letter-spacing:-1px;}
+  .h2-sample{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:28px; letter-spacing:-0.5px;}
+  .h3-sample{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:20px;}
+  .body-sample{font-family:'Inter',sans-serif; font-weight:400; font-size:15px; color:var(--text-secondary);}
+  .caption-sample{font-family:'Inter',sans-serif; font-weight:500; font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;}
+  .num-sample{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:32px; font-variant-numeric:tabular-nums;}
+
+  .btn-row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px; padding:11px 20px; border-radius:10px;
+    cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn-primary{background:linear-gradient(135deg,#6659FF,#0891A6); color:#fff; box-shadow:0 6px 20px rgba(102,89,255,.35);}
+  .btn-secondary{background:var(--surface-2); color:var(--text-primary); border-color:var(--border);}
+  .btn-ghost{background:transparent; color:var(--text-secondary);}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
+  }
+  .badge-dot{width:6px; height:6px; border-radius:50%;}
+  .badge-good{background:var(--status-good-bg); color:var(--status-good);}
+  .badge-warning{background:var(--status-warning-bg); color:var(--status-warning);}
+  .badge-critical{background:var(--status-critical-bg); color:var(--status-critical);}
+  .badge-neutral{background:var(--surface-2); color:var(--text-secondary);}
+
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
+  .kpi-card{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px;
+  }
+  .kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .kpi-label{font-size:13px; color:var(--text-secondary);}
+  .kpi-value{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; font-variant-numeric:tabular-nums;}
+  .kpi-delta{font-size:12px; font-weight:600; margin-top:6px; display:inline-flex; align-items:center; gap:4px;}
+  .kpi-delta.up{color:var(--status-good);} .kpi-delta.down{color:var(--status-critical);}
+
+  .chart-card{background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; position:relative;}
+  .chart-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .legend{display:flex; gap:18px; margin-top:2px;}
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);}
+  .legend-swatch{width:14px; height:2px; border-radius:2px;}
+  .table-toggle{font-size:12px; color:var(--text-secondary); background:none; border:1px solid var(--border); border-radius:6px; padding:5px 10px; cursor:pointer;}
+  #tooltip{
+    position:absolute; pointer-events:none; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 10px; font-size:12px; opacity:0; transition:opacity .1s; box-shadow:var(--shadow);
+    white-space:nowrap;
+  }
+  #dataTable{width:100%; border-collapse:collapse; margin-top:14px; font-size:13px; display:none;}
+  #dataTable.visible{display:table;}
+  #dataTable th,#dataTable td{text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); color:var(--text-secondary);}
+  #dataTable th{color:var(--text-muted); font-weight:600; font-size:11px; text-transform:uppercase;}
+
+  .timeline{display:flex; align-items:center; margin-top:10px;}
+  .tl-step{display:flex; flex-direction:column; align-items:center; flex:1; position:relative;}
+  .tl-dot{width:16px; height:16px; border-radius:50%; background:var(--surface-2); border:2px solid var(--border); z-index:1;}
+  .tl-step.done .tl-dot{background:linear-gradient(135deg,#6659FF,#0891A6); border-color:transparent;}
+  .tl-line{position:absolute; top:7px; left:50%; width:100%; height:2px; background:var(--border); z-index:0;}
+  .tl-step.done .tl-line{background:linear-gradient(90deg,#6659FF,#0891A6);}
+  .tl-step:last-child .tl-line{display:none;}
+  .tl-label{font-size:11px; color:var(--text-secondary); margin-top:8px;}
+
+  table.data-mini{width:100%; border-collapse:collapse; margin-top:8px;}
+  table.data-mini th, table.data-mini td{padding:10px 12px; text-align:left; font-size:13px; border-bottom:1px solid var(--border);}
+  table.data-mini th{color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px;}
+  table.data-mini td{color:var(--text-secondary);}
+  table.data-mini td.strong{color:var(--text-primary); font-weight:600;}
+
+  .dodont{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .dodont .col{background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px;}
+  .dodont h4{margin:0 0 10px; font-family:'Space Grotesk',sans-serif; font-size:14px;}
+  .dodont ul{margin:0; padding-left:18px; color:var(--text-secondary); font-size:13px; line-height:1.7;}
+  footer{padding:32px 0; text-align:center; color:var(--text-muted); font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-top">
+      <div class="logo-lockup">
+        <svg width="42" height="42" viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6659FF"/><stop offset="100%" stop-color="#0891A6"/></linearGradient></defs><rect width="100" height="100" rx="24" fill="var(--surface-2)"/><g transform="translate(50,50) rotate(-18)"><ellipse cx="0" cy="0" rx="30" ry="13" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="0" r="7.5" fill="url(#g1)"/></g></svg>
+        <span class="wordmark">órbita</span>
+      </div>
+      <div class="theme-toggle" id="themeToggle">
+        <button data-mode="dark" class="active">Escuro</button>
+        <button data-mode="light">Claro</button>
+      </div>
+    </div>
+    <p class="tagline">Identidade visual proposta para a plataforma de gestão de vendas em marketplaces — paleta, tipografia, logotipo e componentes de interface.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">Paleta — Marca</h2>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#6659FF"></div><div class="swatch-meta"><div class="name">brand.primary</div><div class="hex">#6659FF</div><div class="use">CTA, logotipo, foco, links</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#0891A6"></div><div class="swatch-meta"><div class="name">brand.secondary</div><div class="hex">#0891A6</div><div class="use">Gradiente, 2ª série de gráfico</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#EC4899"></div><div class="swatch-meta"><div class="name">brand.tertiary</div><div class="hex">#EC4899</div><div class="use">3ª série de gráfico (uso raro)</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#6659FF,#0891A6)"></div><div class="swatch-meta"><div class="name">brand.gradient</div><div class="hex">135deg</div><div class="use">Hero, botão primário, logo</div></div></div>
+    </div>
+
+    <h3 class="sub">Paleta — Status (muda entre modo claro/escuro)</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:var(--status-good)"></div><div class="swatch-meta"><div class="name">status.good</div><div class="hex" id="hexGood">#30A46C</div><div class="use">Lucro, meta batida</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--status-warning)"></div><div class="swatch-meta"><div class="name">status.warning</div><div class="hex" id="hexWarn">#C08109</div><div class="use">Atenção, margem apertada</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--status-critical)"></div><div class="swatch-meta"><div class="name">status.critical</div><div class="hex" id="hexCrit">#E23F6B</div><div class="use">Prejuízo, erro</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Tipografia</h2>
+    <div class="type-row"><div class="type-label">H1 · Space Grotesk 700</div><div class="h1-sample">Lucro líquido real, sem surpresas.</div></div>
+    <div class="type-row"><div class="type-label">H2 · Space Grotesk 600</div><div class="h2-sample">Resumo financeiro</div></div>
+    <div class="type-row"><div class="type-label">H3 · Space Grotesk 600</div><div class="h3-sample">Análise ABC de produtos</div></div>
+    <div class="type-row"><div class="type-label">Número KPI</div><div class="num-sample">R$ 11.144,51</div></div>
+    <div class="type-row"><div class="type-label">Body · Inter 400</div><div class="body-sample">Acompanhe receitas, custos e margem de contribuição de cada venda, em todas as suas contas conectadas.</div></div>
+    <div class="type-row"><div class="type-label">Caption · Inter 500</div><div class="caption-sample">Vendas confirmadas · últimos 30 dias</div></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Componentes</h2>
+
+    <h3 class="sub">Botões</h3>
+    <div class="btn-row">
+      <button class="btn btn-primary">+ Cadastrar SKU</button>
+      <button class="btn btn-secondary">Exportar</button>
+      <button class="btn btn-ghost">Ver detalhes →</button>
+    </div>
+
+    <h3 class="sub">Badges de status</h3>
+    <div class="btn-row">
+      <span class="badge badge-good"><span class="badge-dot" style="background:var(--status-good)"></span>Lucrativo</span>
+      <span class="badge badge-warning"><span class="badge-dot" style="background:var(--status-warning)"></span>Em risco</span>
+      <span class="badge badge-critical"><span class="badge-dot" style="background:var(--status-critical)"></span>Prejuízo</span>
+      <span class="badge badge-neutral"><span class="badge-dot" style="background:var(--text-muted)"></span>Pausado</span>
+    </div>
+
+    <h3 class="sub">Cards de KPI</h3>
+    <div class="card-grid">
+      <div class="kpi-card">
+        <div class="kpi-top"><span class="kpi-label">Faturamento</span></div>
+        <div class="kpi-value">R$ 22.290,00</div>
+        <div class="kpi-delta up">▲ 18,4% vs. período anterior</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><span class="kpi-label">Lucro Líquido</span></div>
+        <div class="kpi-value">R$ 11.480,00</div>
+        <div class="kpi-delta up">▲ 22,1% · margem 51,5%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><span class="kpi-label">ROAS de Ads</span></div>
+        <div class="kpi-value">4.9x</div>
+        <div class="kpi-delta down">▼ 6,2% vs. período anterior</div>
+      </div>
+    </div>
+
+    <h3 class="sub">Evolução — Faturamento vs. Lucro</h3>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#6659FF"></span>Faturamento</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#0891A6"></span>Lucro</div>
+        </div>
+        <button class="table-toggle" id="tableToggle">Ver como tabela</button>
+      </div>
+      <svg id="chart" width="100%" viewBox="0 0 600 220" style="overflow:visible; margin-top:10px;"></svg>
+      <table id="dataTable">
+        <thead><tr><th>Mês</th><th>Faturamento</th><th>Lucro</th></tr></thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+      <div id="tooltip"></div>
+    </div>
+
+    <h3 class="sub">Linha do tempo de status do pedido</h3>
+    <div class="timeline">
+      <div class="tl-step done"><div class="tl-line"></div><div class="tl-dot"></div><div class="tl-label">Pronto</div></div>
+      <div class="tl-step done"><div class="tl-line"></div><div class="tl-dot"></div><div class="tl-label">Em trânsito</div></div>
+      <div class="tl-step"><div class="tl-line"></div><div class="tl-dot"></div><div class="tl-label">Entregue</div></div>
+    </div>
+
+    <h3 class="sub">Tabela densa</h3>
+    <table class="data-mini">
+      <thead><tr><th>Produto</th><th>Vendas</th><th>Receita</th><th>Margem</th></tr></thead>
+      <tbody>
+        <tr><td class="strong">Suporte de mesa industrial</td><td>77</td><td>R$ 5.253,45</td><td><span class="badge badge-good">74,4%</span></td></tr>
+        <tr><td class="strong">Porta rolo papel higiênico</td><td>24</td><td>R$ 1.197,60</td><td><span class="badge badge-warning">28,1%</span></td></tr>
+        <tr><td class="strong">Kit pés de mesa metal</td><td>6</td><td>R$ 745,72</td><td><span class="badge badge-critical">-4,2%</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section style="border-bottom:none;">
+    <h2 class="section-title">Uso — o que fazer e o que evitar</h2>
+    <div class="dodont">
+      <div class="col">
+        <h4 class="brand-primary">Fazer</h4>
+        <ul>
+          <li>Usar o gradiente índigo→ciano só em 1 elemento de destaque por tela (logo, CTA principal ou hero)</li>
+          <li>Manter status (verde/âmbar/vermelho) sempre com ícone + texto</li>
+          <li>Usar Space Grotesk só em títulos e números grandes; Inter no resto</li>
+          <li>Manter fundo dark como padrão, com alternância clara disponível</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4 style="color:var(--status-critical)">Evitar</h4>
+        <ul>
+          <li>Usar laranja/âmbar como cor de marca (reservado só para o status "atenção")</li>
+          <li>Aplicar o gradiente em blocos de texto longos ou tabelas inteiras</li>
+          <li>Colorir uma 4ª série de gráfico "criando" uma cor nova — dobre em "Outros" ou use padrão/textura</li>
+          <li>Usar o ícone da órbita sem o "satélite" — sozinho vira um círculo genérico</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>Conceito autoral gerado como ponto de partida — recomenda-se refinar com um designer antes de registrar a marca.</footer>
+</div>
+
+<script>
+  const html = document.documentElement;
+  const toggleBtns = document.querySelectorAll('#themeToggle button');
+  toggleBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      html.setAttribute('data-theme', btn.dataset.mode);
+      toggleBtns.forEach(b=>b.classList.toggle('active', b===btn));
+      updateStatusHexLabels();
+    });
+  });
+  function updateStatusHexLabels(){
+    const dark = html.getAttribute('data-theme')==='dark';
+    document.getElementById('hexGood').textContent = dark ? '#30A46C' : '#1D8A5A';
+    document.getElementById('hexWarn').textContent = dark ? '#C08109' : '#9A6600';
+    document.getElementById('hexCrit').textContent = dark ? '#E23F6B' : '#C22458';
+  }
+
+  // Chart: Faturamento vs Lucro, 6 months
+  const months = ['Mar','Abr','Mai','Jun','Jul','Ago'];
+  const faturamento = [8.2,9.6,9.1,13.4,19.2,22.3];
+  const lucro = [3.1,3.8,3.6,6.0,9.4,11.5];
+  const svg = document.getElementById('chart');
+  const W=600,H=220,padL=8,padR=8,padT=10,padB=28;
+  const maxV = Math.max(...faturamento)*1.15;
+  const x = i => padL + i*( (W-padL-padR) / (months.length-1) );
+  const y = v => H-padB - (v/maxV)*(H-padT-padB);
+
+  function pathFor(arr){
+    return arr.map((v,i)=> (i===0?'M':'L') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  }
+
+  let svgHtml = '';
+  // gridlines (recessive)
+  for(let g=0; g<=3; g++){
+    const gy = padT + g*((H-padT-padB)/3);
+    svgHtml += `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="var(--grid-line)" stroke-width="1"/>`;
+  }
+  // x labels
+  months.forEach((m,i)=>{
+    svgHtml += `<text x="${x(i)}" y="${H-8}" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-family="Inter">${m}</text>`;
+  });
+  // lines
+  svgHtml += `<path d="${pathFor(faturamento)}" fill="none" stroke="#6659FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svgHtml += `<path d="${pathFor(lucro)}" fill="none" stroke="#0891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // direct end labels
+  svgHtml += `<circle cx="${x(5)}" cy="${y(faturamento[5])}" r="4" fill="#6659FF"/>`;
+  svgHtml += `<circle cx="${x(5)}" cy="${y(lucro[5])}" r="4" fill="#0891A6"/>`;
+  svgHtml += `<text x="${x(5)+8}" y="${y(faturamento[5])+4}" font-size="12" font-weight="600" fill="#6659FF" font-family="Space Grotesk">R$ ${faturamento[5]}k</text>`;
+  svgHtml += `<text x="${x(5)+8}" y="${y(lucro[5])+4}" font-size="12" font-weight="600" fill="#0891A6" font-family="Space Grotesk">R$ ${lucro[5]}k</text>`;
+  // hover targets
+  months.forEach((m,i)=>{
+    svgHtml += `<circle class="hover-target" data-i="${i}" cx="${x(i)}" cy="${y(faturamento[i])}" r="10" fill="transparent"/>`;
+  });
+  svg.innerHTML = svgHtml;
+
+  const tooltip = document.getElementById('tooltip');
+  svg.querySelectorAll('.hover-target').forEach(el=>{
+    el.addEventListener('mouseenter', (e)=>{
+      const i = +el.dataset.i;
+      tooltip.innerHTML = `<strong>${months[i]}</strong><br>Faturamento: R$ ${faturamento[i]}k<br>Lucro: R$ ${lucro[i]}k`;
+      tooltip.style.opacity = 1;
+    });
+    el.addEventListener('mousemove', (e)=>{
+      const rect = svg.parentElement.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+    });
+    el.addEventListener('mouseleave', ()=>{ tooltip.style.opacity = 0; });
+  });
+
+  // data table
+  const tbody = document.getElementById('dataTableBody');
+  months.forEach((m,i)=>{
+    tbody.innerHTML += `<tr><td>${m}</td><td>R$ ${faturamento[i]}k</td><td>R$ ${lucro[i]}k</td></tr>`;
+  });
+  document.getElementById('tableToggle').addEventListener('click', ()=>{
+    document.getElementById('dataTable').classList.toggle('visible');
+  });
+</script>
+</body>
+</html>
