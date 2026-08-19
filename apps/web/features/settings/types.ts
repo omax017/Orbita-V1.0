@@ -68,15 +68,22 @@ export interface ReferralEntry {
   rewardAmount: number;
 }
 
-export type IntegrationStatus = "CONNECTED" | "ERROR" | "SYNCING";
+/** Espelha `MarketplaceAccountStatus` do Prisma + o "SYNCING" client-side
+ * (mock local enquanto uma sincronização manual está rodando — o backend
+ * real não tem esse status intermediário, é só UX otimista). */
+export type IntegrationStatus = "CONNECTED" | "EXPIRED" | "ERROR" | "DISCONNECTED" | "SYNCING";
 
+/** Formato devolvido por `GET /integrations/accounts` (Etapa 9/16) — nomes
+ * batendo com `MarketplaceAccount` do Prisma, não com o mock antigo. */
 export interface ConnectedAccount {
   id: string;
   provider: "MERCADO_LIVRE" | "SHOPEE";
-  accountName: string;
-  externalId: string;
-  connectedAt: Date;
+  externalAccountName: string;
+  externalAccountId: string;
   status: IntegrationStatus;
+  lastSyncedAt: string | null;
+  lastSyncError: string | null;
+  createdAt: string;
   sales30d: number;
   listingsCount: number;
 }

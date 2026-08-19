@@ -1,6 +1,5 @@
 import type {
   ActiveSession,
-  ConnectedAccount,
   Invoice,
   MarginSettings,
   OrderPackage,
@@ -86,10 +85,10 @@ export const MOCK_REFERRALS: ReferralEntry[] = [
   { id: "ref_3", name: "Patrícia Alves", email: "patricia@exemplo.com", status: "PENDING", invitedAt: daysAgo(5), rewardAmount: 0 },
 ];
 
-export const MOCK_CONNECTED_ACCOUNTS: ConnectedAccount[] = [
-  { id: "acc_1", provider: "MERCADO_LIVRE", accountName: "Loja da Maria", externalId: "ML-88213409", connectedAt: daysAgo(210), status: "CONNECTED", sales30d: 312, listingsCount: 9 },
-  { id: "acc_2", provider: "SHOPEE", accountName: "Loja da Maria", externalId: "SP-55021873", connectedAt: daysAgo(140), status: "CONNECTED", sales30d: 198, listingsCount: 7 },
-];
+// MOCK_CONNECTED_ACCOUNTS removido (Etapa 9/16) — a aba Integrações agora
+// busca contas reais em GET /integrations/accounts. Sem mock aqui de
+// propósito: a tela mostra "nenhuma conta conectada" até você conectar de
+// verdade, em vez de fingir uma conexão que não existe.
 
 export const MOCK_MEMBERS: WorkspaceMember[] = [
   { id: "mem_1", name: "Maria da Silva", email: "maria@lojadamaria.com.br", avatarUrl: null, role: "OWNER", joinedAt: daysAgo(365), status: "ACTIVE" },

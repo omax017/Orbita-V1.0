@@ -15,15 +15,24 @@ import {
 import { cn } from "@/lib/utils";
 
 const PROVIDERS = [
-  { id: "MERCADO_LIVRE" as const, label: "Mercado Livre", icon: Store },
-  { id: "SHOPEE" as const, label: "Shopee", icon: ShoppingBag },
+  { id: "MERCADO_LIVRE" as const, label: "Mercado Livre", icon: Store, implemented: true },
+  { id: "SHOPEE" as const, label: "Shopee", icon: ShoppingBag, implemented: false },
 ];
 
-/** Sem OAuth real ainda — mostra a etapa de escolha do marketplace, que é
- * onde o fluxo real de conexão (redirect OAuth) vai entrar depois. */
-export function ConnectAccountDialog() {
+/** "Continuar" leva pra uma navegação de página inteira (não um fetch) —
+ * é assim que o fluxo OAuth funciona: o browser precisa ir de verdade pro
+ * Mercado Livre pedir autorização, não dá pra fazer isso via XHR. Por isso
+ * `workspaceId` vai como query param (`?workspaceId=`), não como header
+ * `X-Workspace-Id` (que uma navegação normal não consegue anexar) — ver
+ * `WorkspaceGuard` no backend, que aceita os dois caminhos. */
+export function ConnectAccountDialog({ workspaceId }: { workspaceId: string }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<(typeof PROVIDERS)[number]["id"] | null>(null);
+
+  function handleContinue() {
+    if (selected !== "MERCADO_LIVRE") return;
+    window.location.href = `/api/v1/integrations/mercado-livre/connect?workspaceId=${encodeURIComponent(workspaceId)}`;
+  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setSelected(null); }}>
@@ -46,14 +55,16 @@ export function ConnectAccountDialog() {
               <button
                 key={p.id}
                 type="button"
+                disabled={!p.implemented}
                 onClick={() => setSelected(p.id)}
                 className={cn(
-                  "flex flex-col items-center gap-2 rounded-lg border p-4 text-sm font-medium transition-colors",
-                  selected === p.id ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:bg-accent",
+                  "flex flex-col items-center gap-2 rounded-lg border p-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                  selected === p.id ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:enabled:bg-accent",
                 )}
               >
                 <Icon className="h-6 w-6" />
                 {p.label}
+                {!p.implemented ? <span className="text-xs text-muted-foreground">Em breve</span> : null}
               </button>
             );
           })}
@@ -61,7 +72,7 @@ export function ConnectAccountDialog() {
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button type="button" disabled={!selected}>Continuar</Button>
+          <Button type="button" disabled={!selected} onClick={handleContinue}>Continuar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

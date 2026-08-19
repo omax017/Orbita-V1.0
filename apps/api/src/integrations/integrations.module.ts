@@ -11,6 +11,7 @@ import { OAuthStateService } from "./oauth-state.service";
 import { MarketplaceAccountsService } from "./marketplace-accounts.service";
 import { OrderSyncService } from "./order-sync.service";
 import { IntegrationsController } from "./integrations.controller";
+import { MarketplaceAccountsController } from "./marketplace-accounts.controller";
 import { MarketplaceSyncQueueModule } from "./queues/marketplace-sync-queue.module";
 import { MarketplaceSyncProcessor } from "./queues/marketplace-sync.processor";
 import { MarketplaceSyncScheduler } from "./queues/marketplace-sync.scheduler";
@@ -46,7 +47,7 @@ import { WorkspacesModule } from "../workspaces/workspaces.module";
     WorkspacesModule,
     JwtModule.register({}), // OAuthStateService passa secret/expiresIn por chamada
   ],
-  controllers: [IntegrationsController],
+  controllers: [IntegrationsController, MarketplaceAccountsController],
   providers: [
     MercadoLivreConnector,
     ShopeeConnector,

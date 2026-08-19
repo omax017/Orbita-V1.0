@@ -8,7 +8,9 @@ import type { ConnectedAccount } from "../types";
 const STATUS_META: Record<ConnectedAccount["status"], { label: string; variant: "success" | "warning" | "destructive" }> = {
   CONNECTED: { label: "Conectada", variant: "success" },
   SYNCING: { label: "Sincronizando", variant: "warning" },
+  EXPIRED: { label: "Token expirado", variant: "warning" },
   ERROR: { label: "Erro na sincronização", variant: "destructive" },
+  DISCONNECTED: { label: "Desconectada", variant: "destructive" },
 };
 
 const DATE_FORMAT = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -29,12 +31,15 @@ export function ConnectedAccountCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-foreground">{account.accountName}</p>
+            <p className="text-sm font-medium text-foreground">{account.externalAccountName}</p>
             <MarketplaceTag provider={account.provider} accountLabel={account.provider === "MERCADO_LIVRE" ? "Mercado Livre" : "Shopee"} />
           </div>
           <p className="text-xs text-muted-foreground">
-            ID {account.externalId} · conectada em {DATE_FORMAT.format(account.connectedAt)}
+            ID {account.externalAccountId} · conectada em {DATE_FORMAT.format(new Date(account.createdAt))}
           </p>
+          {account.lastSyncError ? (
+            <p className="mt-1 text-xs text-destructive">{account.lastSyncError}</p>
+          ) : null}
         </div>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>

@@ -16,14 +16,20 @@ export class ApiError extends Error {
  * funcionar em produção (frontend e backend em domínios diferentes).
  * `credentials: "include"` continua necessário pro browser enviar/receber o
  * cookie httpOnly nessa chamada same-origin.
+ *
+ * `workspaceId` manda o header `X-Workspace-Id`, exigido por qualquer rota
+ * atrás de `WorkspaceGuard` no backend — passe sempre que a chamada for pra
+ * um recurso escopado por workspace (praticamente tudo, exceto /auth/*).
  */
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiFetch<T>(path: string, init?: RequestInit & { workspaceId?: string }): Promise<T> {
+  const { workspaceId, ...rest } = init ?? {};
   const res = await fetch(`/api/v1${path}`, {
-    ...init,
+    ...rest,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...init?.headers,
+      ...(workspaceId ? { "X-Workspace-Id": workspaceId } : {}),
+      ...rest.headers,
     },
   });
 
