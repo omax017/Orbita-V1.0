@@ -94,8 +94,23 @@ export interface MlItem {
   available_quantity: number;
   sold_quantity: number;
   category_id: string | null;
+  seller_id?: number;
   health?: number | null; // "quality score" do anúncio (0–1)
   variations?: MlItemVariation[];
+}
+
+/** Resposta de `GET /users/{id}` quando o alvo é um VENDEDOR (não a conta
+ * autenticada) — traz reputação pública, usada pela Análise de Anúncio pra
+ * mostrar dados reais do vendedor de um anúncio de terceiro. */
+export interface MlSellerResponse {
+  id: number;
+  nickname: string;
+  registration_date?: string;
+  seller_reputation?: {
+    level_id: string | null; // "5_green" | "4_light_green" | "3_yellow" | "2_orange" | "1_red" | null
+    power_seller_status: string | null;
+    transactions?: { total?: number };
+  };
 }
 
 export interface MlItemsSearchResponse {

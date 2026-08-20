@@ -84,6 +84,17 @@ export interface ListingAnalysisResult {
   conversionPercent: number;
   revenue30d: number;
   seller: SellerProfile;
+  /** Campos vindos do `POST /discovery/anuncio` real (Etapa 20) — presentes
+   * só quando o link é de um item do Mercado Livre E o workspace tem uma
+   * conta conectada (ver `discovery.service.ts`). `isReal: false`/ausente
+   * significa que a busca caiu de volta pros dados gerados. */
+  isReal?: boolean;
+  thumbnailUrl?: string | null;
+  permalink?: string | null;
+  /** Vendas históricas TOTAIS do anúncio (dado real do ML) — não confundir
+   * com `sales30d`, que continua estimado (ML não expõe vendas por período
+   * pra item de outro vendedor). */
+  totalSalesAllTime?: number;
 }
 
 interface DiscoveryHistoryBase {

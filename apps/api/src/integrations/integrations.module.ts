@@ -60,6 +60,6 @@ import { WorkspacesModule } from "../workspaces/workspaces.module";
     MarketplaceSyncProcessor,
     MarketplaceSyncScheduler,
   ],
-  exports: [MarketplaceConnectorRegistry, TokenEncryptionService],
+  exports: [MarketplaceConnectorRegistry, TokenEncryptionService, MarketplaceAccountsService],
 })
 export class IntegrationsModule {}
