@@ -9,27 +9,56 @@ import { Input } from "@/components/ui/input";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatNumber } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
 import { DISCOVERY_CATEGORIES, generateNicheSearch } from "./mock-data";
 import { findDiscoveryEntry, loadDiscoveryHistory, saveDiscoveryEntry } from "./history-store";
-import type { NicheSearchResult } from "./types";
+import type { LogisticsType, NicheSearchResult, OpportunityScoreFactor } from "./types";
 import { GARIMPADOR_STAGES, ProgressStepper } from "./components/progress-stepper";
 import { VisitsTrendChart } from "./components/visits-trend-chart";
 import { KeywordCloud } from "./components/keyword-cloud";
 import { competitorTableColumns } from "./components/competitor-table-columns";
 import { RecentSearchesList } from "./components/recent-searches-list";
+import { OpportunityScoreCard } from "./components/opportunity-score-card";
+
+/** Resposta de `POST /discovery/garimpador` (backend real, Etapa 16) — vendas,
+ * mercado e visitas usam a mesma fórmula seedada do gerador local (por isso
+ * batem numericamente), mas a Pontuação de Oportunidade é calculada de
+ * verdade no backend (`opportunity-score.ts`), não é mockada. */
+interface GarimpadorApiResult {
+  totalSales: number;
+  addressableMarket: number;
+  visits30d: number;
+  competitorCount: number;
+  visitsTrendGrowthPercent: number;
+  estimatedMarginPercent: number;
+  opportunityScore: number;
+  opportunityFactors: OpportunityScoreFactor[];
+}
 
 const selectClasses = cn(
   "flex h-9 w-full max-w-[220px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 );
 
-export function GarimpadorContent() {
+const LOGISTICS_FILTERS: LogisticsType[] = ["Full", "Correios", "Coleta", "Agência"];
+
+export function GarimpadorContent({ workspaceId }: { workspaceId: string }) {
   const searchParams = useSearchParams();
   const [term, setTerm] = useState("");
   const [category, setCategory] = useState<string>(DISCOVERY_CATEGORIES[0]);
   const [stage, setStage] = useState<number | null>(null);
   const [result, setResult] = useState<NicheSearchResult | null>(null);
   const [recent, setRecent] = useState(() => loadDiscoveryHistory().filter((e) => e.type === "GARIMPADOR"));
+  const [logisticsFilter, setLogisticsFilter] = useState<Set<LogisticsType>>(new Set());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function toggleLogisticsFilter(type: LogisticsType) {
+    setLogisticsFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }
 
   useEffect(() => {
     return () => {
@@ -49,13 +78,15 @@ export function GarimpadorContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function runStages(onDone: () => void) {
+  function runStages(onDone: () => void | Promise<void>) {
     setStage(0);
     const advance = (next: number) => {
       timerRef.current = setTimeout(() => {
         if (next >= GARIMPADOR_STAGES.length) {
-          onDone();
-          setStage(null);
+          // `onDone` pode ser assíncrono (chamada real ao backend) — só some
+          // com o stepper depois que o resultado já estiver pronto, senão a
+          // tela pisca em "vazio" entre o fim da animação e a resposta da API.
+          Promise.resolve(onDone()).finally(() => setStage(null));
           return;
         }
         setStage(next);
@@ -67,8 +98,26 @@ export function GarimpadorContent() {
 
   function handleSearch() {
     if (!term.trim() || stage !== null) return;
-    runStages(() => {
-      const niche = generateNicheSearch(term.trim(), category);
+    const trimmedTerm = term.trim();
+    setLogisticsFilter(new Set());
+    runStages(async () => {
+      // Visualização (tendência, nuvem de palavras, tabela de concorrentes)
+      // continua gerada localmente — o backend ainda não coleta esses dados
+      // (ver mock-data.ts). O que É real: a Pontuação de Oportunidade, que
+      // vem de `POST /discovery/garimpador` e também grava no histórico do
+      // workspace (`SearchHistory`), não só no localStorage deste navegador.
+      const niche = generateNicheSearch(trimmedTerm, category);
+      try {
+        const apiResult = await apiFetch<GarimpadorApiResult>("/discovery/garimpador", {
+          method: "POST",
+          workspaceId,
+          body: JSON.stringify({ termo: trimmedTerm, categoria: category }),
+        });
+        Object.assign(niche, apiResult);
+      } catch {
+        // Se a chamada falhar (rede, sessão expirada etc.), mantém a busca
+        // funcionando com os dados locais — só sem a Pontuação de Oportunidade.
+      }
       setResult(niche);
       const updated = saveDiscoveryEntry({
         id: `hist_${Date.now()}`,
@@ -87,6 +136,7 @@ export function GarimpadorContent() {
       setTerm(entry.result.term);
       setCategory(entry.result.category);
       setResult(entry.result);
+      setLogisticsFilter(new Set());
     }
   }
 
@@ -140,6 +190,10 @@ export function GarimpadorContent() {
             <KpiCard icon={TrendingUp} label="Visitas (30d)" value={formatNumber(result.visits30d)} />
           </div>
 
+          {result.opportunityScore !== undefined && result.opportunityFactors ? (
+            <OpportunityScoreCard score={result.opportunityScore} factors={result.opportunityFactors} />
+          ) : null}
+
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-3 text-sm font-semibold text-foreground">Produto destaque</h2>
             <div className="flex items-center gap-3">
@@ -159,9 +213,33 @@ export function GarimpadorContent() {
             <KeywordCloud keywords={result.keywords} />
           </div>
 
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Filtrar por logística:</span>
+            {LOGISTICS_FILTERS.map((type) => {
+              const active = logisticsFilter.has(type);
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => toggleLogisticsFilter(type)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                    active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  {type}
+                </button>
+              );
+            })}
+          </div>
+
           <DataTable
             columns={competitorTableColumns}
-            data={result.competitors}
+            data={
+              logisticsFilter.size === 0
+                ? result.competitors
+                : result.competitors.filter((c) => logisticsFilter.has(c.logisticsType))
+            }
             exportFilename="garimpador-concorrentes"
             emptyState={{ icon: Pickaxe, title: "Nenhum concorrente encontrado" }}
           />

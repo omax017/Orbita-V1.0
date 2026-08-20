@@ -19,6 +19,7 @@ import {
   Tags,
   Trophy,
   Wallet,
+  Wrench,
 } from "lucide-react";
 
 export interface NavLeaf {
@@ -80,6 +81,7 @@ export const navSections: NavSection[] = [
       { label: "Garimpador", href: "/descobrir/garimpador", icon: Pickaxe },
       { label: "Concorrentes", href: "/descobrir/concorrentes", icon: Compass },
       { label: "Análise de Anúncio", href: "/descobrir/analise-anuncio", icon: FileSearch },
+      { label: "Ferramentas", href: "/descobrir/ferramentas", icon: Wrench },
       { label: "Histórico", href: "/descobrir/historico", icon: History },
     ],
   },

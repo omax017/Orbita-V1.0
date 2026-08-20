@@ -655,3 +655,55 @@ Fluxo real (não mock): busca o SKU por código (`GET /catalog/skus?q=`), cria s
 Validado o que dava pra validar sem abrir um Chrome de verdade: sintaxe de todos os `.js` (`node --check` nos scripts clássicos, `node -e "import(...)"` nos módulos ES — `background.js` chega até `chrome is not defined`, confirmando que o parse/import passou e só falha por rodar fora de um browser, como esperado), `manifest.json` é JSON válido, e os 3 ajustes de auth (Bearer, refresh via body, cookies renomeados) testados via HTTP contra o servidor real (login devolve `tokens` no corpo, `/auth/me` autentica com o Bearer devolvido, `/auth/refresh` funciona só com `refreshToken` no corpo sem cookie nenhum, e o fluxo de cookie do site continua funcionando sem regressão).
 
 **Não verificado**: carregar a extensão de verdade num Chrome (popup, injeção do content script numa página real do ML, clique end-to-end) — isso precisa de "Carregar sem compactação" num Chrome de verdade, que não tentei fazer sozinho (é uma mudança persistente no navegador do usuário; instruções em `apps/extension/README.md`).
+
+## 18. Pontuação de Oportunidade (0-100) — primeira feature inspirada no concorrente "Hunter Spy"
+
+Contexto: o usuário mostrou a extensão concorrente "Hunter Spy" ("nossa IA exclusiva analisa 15 variáveis e te dá uma nota de 0-100") e pediu algo parecido, aceitando explicitamente rodar com dados gerados (scraping real fica pra depois — Etapa 16 continua valendo) e delegando a mim a ordem de prioridade das features ("o que for melhor em termos de vendas"). Escolhida a Pontuação de Oportunidade como primeira entrega por três motivos: é o gancho de marketing mais forte do concorrente, e — diferente de qualquer feature que dependa de scraping — dava pra construir **hoje**, porque o Garimpador (Etapa 7/16) já gera todos os números de entrada que o score precisa.
+
+**Importante**: isto não é uma cópia da "IA de 15 variáveis" do concorrente. É um algoritmo autoral, documentado e determinístico — soma ponderada de 5 fatores (não 15, não é IA/ML) com fórmula pública, não caixa-preta.
+
+### 18.1 O algoritmo (`apps/api/src/discovery/opportunity-score.ts`)
+
+`computeOpportunityScore(input)` recebe `totalSales`, `addressableMarket`, `competitorCount`, `visitsTrendGrowthPercent`, `estimatedMarginPercent` — todos já calculados/gerados pelo `DiscoveryService.garimpador()` — e devolve `{ score, factors }`, onde cada fator tem `label`/`weight`/`score` (0-100) pra UI conseguir mostrar o "porquê" da nota, não só o número final:
+
+- **Demanda** (peso 0,25) e **Tamanho do mercado** (peso 0,15): escala logarítmica (`logScore`) — vendas/mercado variam em ordens de grandeza, então diferença linear não faz sentido pra pontuação.
+- **Concorrência** (peso 0,20): linear invertido, `100 - competidores × 10` — 10+ concorrentes já zera essa parte (mercado saturado).
+- **Tendência de visitas** (peso 0,15): centrado em 50 (estável), varia ±1 ponto por 1% de crescimento/queda no período.
+- **Margem estimada** (peso 0,25): linear até 35% de margem = nota máxima (mesmo limiar "Excelente" já usado em Configurações → Margens, Etapa 8 — consistência entre módulos).
+
+### 18.2 Onde os números de entrada vêm de (ainda gerados, não coletados)
+
+`competitorCount`, `visitsTrendGrowthPercent` são gerados por seed determinístico (mesmo padrão de todo o módulo Discovery desde a Etapa 7). `estimatedMarginPercent` reaproveita a MESMA fórmula de custo do módulo Financeiro (custo = preço ÷ 2,4, taxa 12%, frete líquido 7,2%, imposto 6%) aplicada ao preço médio observado no nicho — não é um número novo inventado, é a estrutura de custo já usada em todo o resto do produto.
+
+### 18.3 Frontend — ligado ao endpoint real, não ao mock antigo
+
+Diferente do resto do módulo Discovery (que ainda é 100% mock no frontend), o Garimpador (`apps/web/features/discovery/garimpador-content.tsx`) agora chama `POST /discovery/garimpador` de verdade (`apiFetch` com `workspaceId`, mesmo padrão da Etapa "Conecta Integrações ao backend real") e mescla a resposta real (score, fatores, vendas/mercado/visitas) por cima do resultado gerado localmente — que continua sendo a única fonte pra tendência de visitas (gráfico), nuvem de palavras-chave e tabela de concorrentes, porque o backend ainda não gera esses dados. Se a chamada falhar (rede, sessão expirada), a busca não quebra — só fica sem o card de Pontuação de Oportunidade.
+
+`OpportunityScoreCard` (`apps/web/features/discovery/components/opportunity-score-card.tsx`): anel de progresso em SVG puro (sem lib de gráfico), faixa de cor por score (≥70 verde "Ótima oportunidade", ≥45 âmbar "Oportunidade moderada", <45 vermelho "Baixa oportunidade") e barra por fator mostrando o breakdown.
+
+`runStages()` (animação do stepper de progresso) precisou aceitar `onDone` assíncrono — antes o "sumir com o stepper" era síncrono, e trocar pra `await` na chamada real evita um flash de tela vazia entre o fim da animação e a resposta da API.
+
+### 18.4 Verificação
+
+`type-check`/`lint` limpos em `@hubwin/api` e `@hubwin/web`. Testado via curl direto contra `/discovery/garimpador` com 3 termos diferentes ("escorredor de louça" → 70, "capinha de celular" → 70, "organizador de gaveta" → 75) confirmando scores variados e coerentes com os fatores de entrada. Testado end-to-end no navegador (registro → login → busca no Garimpador): `POST /api/v1/discovery/garimpador` retorna `201`, card de Pontuação de Oportunidade renderiza com score 77 "Ótima oportunidade" e os 5 fatores com barras, sem erros no console.
+
+## 19. Ferramentas bônus e filtro de logística — continuação do Etapa 18
+
+Depois de aprovar a Pontuação de Oportunidade, o usuário pediu pra seguir com o resto das ideias inspiradas no Hunter Spy, delegando a ordem a mim. Escolhidas mais duas entregas de baixo risco/alto retorno (sem depender de scraping): as "ferramentas bônus" (calculadora de lucro + gerador de EAN) e um filtro simples na tabela de concorrentes do Garimpador.
+
+### 19.1 Nova aba "Ferramentas" (`/descobrir/ferramentas`)
+
+`apps/web/features/discovery/tools.ts` — cálculo puro, sem API (o usuário está simulando um produto que nem tem ainda, não há pedido real pra consultar):
+
+- **Calculadora de lucro inteligente** (`computeProfitCalculator` + `suggestPriceForTargetMargin`): dado preço/custo/embalagem/frete/comissão/imposto/ads, devolve lucro e margem líquida por unidade. A parte "inteligente": `suggestPriceForTargetMargin` resolve o preço algebricamente pra bater uma margem-alvo — como comissão/imposto/ads são todos % do PREÇO (não do custo), não é um simples "custo ÷ (1 − margem)"; isola o preço numa equação com todos os percentuais do lado dele e devolve `null` quando a soma dos percentuais + margem-alvo passa de 100% (não existe preço finito que resolva).
+- **Gerador de EAN-13** (`generateEan13`): dígito verificador GS1 válido (mod 10, pesos 1/3 alternados), prefixo `789` (faixa GS1 Brasil) só pra parecer plausível — deixado explícito na UI que NÃO é um código registrado de verdade (isso exige associação paga à GS1 Brasil, fora do escopo).
+
+**Bug pego e corrigido antes de fechar a etapa**: `EanGeneratorCard` inicializava o código no `useState(() => generateEan13())`, que roda tanto no primeiro render do servidor quanto no primeiro render do cliente — como `generateEan13` usa `Math.random()`, os dois rodavam com valores diferentes, causando erro de hidratação do React (confirmado no console: "Text content did not match... Warning: An error occurred during hydration"). Corrigido gerando o código só depois de montar (`useEffect` com `code` começando `null`), documentado no comentário do componente.
+
+### 19.2 Filtro por logística no Garimpador
+
+`garimpador-content.tsx`: chips de alternância (Full/Correios/Coleta/Agência — os mesmos valores de `LogisticsType` já usados desde a Etapa 7, não os nomes do Hunter Spy "Full/Flex/Catálogo", que são conceitos específicos do ML e quebrariam consistência com o resto do produto) acima da tabela de concorrentes; `Set<LogisticsType>` vazio = sem filtro, senão mostra só as linhas cujo `logisticsType` está no set. Reseta a cada nova busca/seleção de histórico.
+
+### 19.3 Verificação
+
+`type-check`/`lint` limpos. Testado no navegador: `/descobrir/ferramentas` renderiza sem erro de hidratação nem exceção (confirmado lendo o console limpo numa aba nova, depois de identificar que os erros anteriores eram de compilações antigas do Fast Refresh), EAN gerado conferido manualmente (checksum bate: 12 dígitos `789185119118` → dígito verificador `3`, igual ao mostrado na tela). Filtro testado disparando uma busca real e clicando "Correios" via `dispatchEvent`/`click()`: tabela foi de 8 para 4 linhas, todas com logística "Correios".

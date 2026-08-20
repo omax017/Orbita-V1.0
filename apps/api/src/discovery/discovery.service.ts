@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { computeOpportunityScore } from "./opportunity-score";
 
 /**
  * Tudo aqui é gerado (seed determinístico por hash, mesmo algoritmo do mock
@@ -34,12 +35,41 @@ export class DiscoveryService {
     const addressableMarket = Math.round(totalSales * avgPrice);
     const visits30d = Math.round(totalSales * (8 + this.seededRandom(`${seed}-visitratio`) * 12));
 
+    // Entradas novas pra Pontuação de Oportunidade (ver opportunity-score.ts)
+    // — ainda geradas (sem scraping real, Etapa 7/16), mas o SCORE em cima
+    // delas é um cálculo de verdade, não mockado.
+    const competitorCount = 1 + Math.floor(this.seededRandom(`${seed}-competitors`) * 12);
+    const visitsTrendGrowthPercent = Math.round((this.seededRandom(`${seed}-trend`) - 0.5) * 100); // -50% a +50%
+
+    // Margem de contribuição estimada pro preço médio do nicho — mesma
+    // fórmula do módulo Financeiro (preço = custo × 2.4, taxa 12%, frete
+    // líquido 7,2%, imposto 6%), assumindo que o preço médio observado JÁ
+    // reflete essa estrutura de custo típica da categoria.
+    const estimatedCost = avgPrice / 2.4;
+    const fee = avgPrice * 0.12;
+    const shippingNet = avgPrice * 0.072;
+    const tax = avgPrice * 0.06;
+    const estimatedMarginPercent = ((avgPrice - estimatedCost - fee - shippingNet - tax) / avgPrice) * 100;
+
+    const opportunity = computeOpportunityScore({
+      totalSales,
+      addressableMarket,
+      competitorCount,
+      visitsTrendGrowthPercent,
+      estimatedMarginPercent,
+    });
+
     const result = {
       term: termo,
       category: categoria,
       totalSales,
       addressableMarket,
       visits30d,
+      competitorCount,
+      visitsTrendGrowthPercent,
+      estimatedMarginPercent: Math.round(estimatedMarginPercent * 10) / 10,
+      opportunityScore: opportunity.score,
+      opportunityFactors: opportunity.factors,
     };
 
     await this.saveHistory(workspaceId, userId, "GARIMPADOR", `${termo} — ${categoria}`, result);

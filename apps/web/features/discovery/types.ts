@@ -25,6 +25,12 @@ export interface VisitsTrendPoint {
   visits: number;
 }
 
+export interface OpportunityScoreFactor {
+  label: string;
+  weight: number;
+  score: number;
+}
+
 export interface NicheSearchResult {
   id: string;
   term: string;
@@ -36,6 +42,15 @@ export interface NicheSearchResult {
   visitsTrend: VisitsTrendPoint[];
   keywords: KeywordTag[];
   competitors: CompetitorProduct[];
+  /** Campos calculados pelo backend real (`POST /discovery/garimpador`) —
+   * opcionais porque entradas antigas do histórico local (localStorage) e o
+   * seed de demonstração (`SEED_DISCOVERY_HISTORY`) foram gravados antes
+   * dessa etapa e não têm esses campos. */
+  competitorCount?: number;
+  visitsTrendGrowthPercent?: number;
+  estimatedMarginPercent?: number;
+  opportunityScore?: number;
+  opportunityFactors?: OpportunityScoreFactor[];
 }
 
 export type SellerReputation = "Excelente" | "Boa" | "Regular" | "Nova";
