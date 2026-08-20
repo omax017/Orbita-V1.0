@@ -48,17 +48,25 @@ export function jobName(data: MarketplaceSyncJobData): string {
 /** jobId estável evita duplicar o mesmo trabalho na fila (BullMQ ignora um
  * `add()` com `jobId` de um job que já está esperando/ativo). Essencial pro
  * fallback de polling não empilhar sync do mesmo pedido que um webhook já
- * enfileirou segundos atrás. */
+ * enfileirou segundos atrás.
+ *
+ * Separador é `-`, NUNCA `:` — BullMQ usa `:` como separador interno das
+ * chaves do Redis e rejeita jobId customizado que contenha o caractere
+ * ("Error: Custom Id cannot contain :"). Bug real: isso quebrava TODO
+ * enfileiramento (inclusive o sync de pedidos, desde sempre) de forma
+ * silenciosa — o clique em "Sincronizar" dava 500, mas a tela não mostrava
+ * nada além de continuar em 0/0. Achado testando sincronização de verdade
+ * em produção. */
 export function jobId(data: MarketplaceSyncJobData): string {
   switch (data.type) {
     case "SYNC_ACCOUNT_ORDERS":
-      return `sync-account:${data.marketplaceAccountId}`;
+      return `sync-account-${data.marketplaceAccountId}`;
     case "SYNC_SINGLE_ORDER":
-      return `sync-order:${data.marketplaceAccountId}:${data.externalOrderId}`;
+      return `sync-order-${data.marketplaceAccountId}-${data.externalOrderId}`;
     case "SYNC_ACCOUNT_LISTINGS":
-      return `sync-listings:${data.marketplaceAccountId}`;
+      return `sync-listings-${data.marketplaceAccountId}`;
     case "REFRESH_TOKEN":
-      return `refresh-token:${data.marketplaceAccountId}`;
+      return `refresh-token-${data.marketplaceAccountId}`;
   }
 }
 
