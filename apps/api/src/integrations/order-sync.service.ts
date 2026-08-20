@@ -4,7 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AlertsService } from "../alerts/alerts.service";
 import { MarketplaceAccountsService } from "./marketplace-accounts.service";
 import { MarketplaceConnectorRegistry } from "./connectors/connector-registry";
-import type { NormalizedOrder } from "./connectors/marketplace-connector.types";
+import type { NormalizedListing, NormalizedOrder } from "./connectors/marketplace-connector.types";
 
 // Trava de segurança contra loop infinito de paginação (ex.: um provider que
 // devolva `nextPage` de forma inconsistente) — nenhuma conta realista tem
@@ -64,6 +64,94 @@ export class OrderSyncService {
 
     this.logger.log(`Conta ${marketplaceAccountId}: ${synced} pedido(s) sincronizado(s)`);
     return { synced };
+  }
+
+  /** Sincroniza os anúncios de uma conta inteira (`Listing`) — sem isso
+   * `resolveItemCost` nunca acha o anúncio de um pedido (fica sem
+   * custo/lucro atribuído) e "anúncios ativos" na tela de Integrações fica
+   * sempre 0. Sempre completo (não incremental): a Items Search API do ML
+   * não tem um filtro de "atualizado desde" tão direto quanto Orders, e o
+   * volume de anúncios por vendedor é tipicamente bem menor que o de pedidos. */
+  async syncAccountListings(marketplaceAccountId: string): Promise<{ synced: number }> {
+    const { account, credentials } = await this.accounts.getCredentials(marketplaceAccountId);
+    const connector = this.connectors.get(account.provider);
+
+    let synced = 0;
+    let pageParam: string | null = null;
+    let page = 0;
+
+    try {
+      do {
+        const result = await connector.listListings(credentials, { pageParam });
+
+        for (const listing of result.items) {
+          await this.upsertListing(account, listing);
+          synced += 1;
+        }
+
+        pageParam = result.nextPage;
+        page += 1;
+      } while (pageParam && page < MAX_PAGES_PER_SYNC);
+
+      await this.prisma.marketplaceAccount.update({
+        where: { id: marketplaceAccountId },
+        data: { lastSyncError: null, status: "CONNECTED" },
+      });
+    } catch (error) {
+      await this.prisma.marketplaceAccount.update({
+        where: { id: marketplaceAccountId },
+        data: { lastSyncError: (error as Error).message },
+      });
+      this.logger.error(`Falha sincronizando anúncios da conta ${marketplaceAccountId}: ${(error as Error).message}`);
+      throw error;
+    }
+
+    this.logger.log(`Conta ${marketplaceAccountId}: ${synced} anúncio(s) sincronizado(s)`);
+    return { synced };
+  }
+
+  private async upsertListing(account: MarketplaceAccount, normalized: NormalizedListing): Promise<void> {
+    await this.prisma.listing.upsert({
+      where: {
+        marketplaceAccountId_externalListingId: {
+          marketplaceAccountId: account.id,
+          externalListingId: normalized.externalListingId,
+        },
+      },
+      create: {
+        workspaceId: account.workspaceId,
+        marketplaceAccountId: account.id,
+        provider: account.provider,
+        externalListingId: normalized.externalListingId,
+        title: normalized.title,
+        status: normalized.status,
+        permalink: normalized.permalink,
+        thumbnailUrl: normalized.thumbnailUrl,
+        currency: normalized.currency,
+        price: normalized.price,
+        availableQuantity: normalized.availableQuantity,
+        soldQuantity: normalized.soldQuantity,
+        categoryExternalId: normalized.categoryExternalId,
+        categoryName: normalized.categoryName,
+        qualityScore: normalized.qualityScore,
+        rawPayload: normalized.raw as object,
+        lastSyncedAt: new Date(),
+      },
+      update: {
+        title: normalized.title,
+        status: normalized.status,
+        permalink: normalized.permalink,
+        thumbnailUrl: normalized.thumbnailUrl,
+        price: normalized.price,
+        availableQuantity: normalized.availableQuantity,
+        soldQuantity: normalized.soldQuantity,
+        categoryExternalId: normalized.categoryExternalId,
+        categoryName: normalized.categoryName,
+        qualityScore: normalized.qualityScore,
+        rawPayload: normalized.raw as object,
+        lastSyncedAt: new Date(),
+      },
+    });
   }
 
   /** Sincroniza 1 pedido específico — o que um webhook dispara. */

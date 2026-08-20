@@ -42,6 +42,10 @@ export class MarketplaceSyncProcessor extends WorkerHost {
         await this.orderSync.syncSingleOrder(job.data.marketplaceAccountId, job.data.externalOrderId);
         return;
 
+      case "SYNC_ACCOUNT_LISTINGS":
+        await this.orderSync.syncAccountListings(job.data.marketplaceAccountId);
+        return;
+
       case "REFRESH_TOKEN":
         await this.accounts.refreshToken(job.data.marketplaceAccountId);
         return;

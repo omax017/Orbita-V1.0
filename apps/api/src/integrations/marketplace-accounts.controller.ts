@@ -51,8 +51,14 @@ export class MarketplaceAccountsController {
   async sync(@CurrentWorkspace() workspace: CurrentWorkspacePayload, @Param("id") id: string) {
     await this.prisma.marketplaceAccount.findFirstOrThrow({ where: { id, workspaceId: workspace.workspaceId } });
 
-    const data: MarketplaceSyncJobData = { type: "SYNC_ACCOUNT_ORDERS", marketplaceAccountId: id };
-    await this.queue.add(jobName(data), data, { jobId: jobId(data) });
+    // Pedidos E anúncios — antes só pedidos eram enfileirados aqui, então
+    // `Listing` nunca era populada e "anúncios ativos" ficava sempre 0 na
+    // tela (bug real, achado testando em produção).
+    const jobs: MarketplaceSyncJobData[] = [
+      { type: "SYNC_ACCOUNT_ORDERS", marketplaceAccountId: id },
+      { type: "SYNC_ACCOUNT_LISTINGS", marketplaceAccountId: id },
+    ];
+    await Promise.all(jobs.map((data) => this.queue.add(jobName(data), data, { jobId: jobId(data) })));
 
     return { ok: true, queued: true };
   }

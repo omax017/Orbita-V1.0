@@ -72,7 +72,18 @@ export class IntegrationsController {
     }
 
     try {
-      await this.accounts.handleCallback({ provider: MarketplaceProvider.MERCADO_LIVRE, code, state });
+      const account = await this.accounts.handleCallback({ provider: MarketplaceProvider.MERCADO_LIVRE, code, state });
+
+      // Primeiro sync automático — antes disso o usuário via "0 vendas / 0
+      // anúncios" até clicar em "Sincronizar" manualmente na tela (bug real
+      // achado testando em produção; o comentário em order-sync.service.ts
+      // já previa "primeiro sync pós-conexão", só nunca tinha sido ligado).
+      const jobs: MarketplaceSyncJobData[] = [
+        { type: "SYNC_ACCOUNT_ORDERS", marketplaceAccountId: account.id },
+        { type: "SYNC_ACCOUNT_LISTINGS", marketplaceAccountId: account.id },
+      ];
+      await Promise.all(jobs.map((data) => this.queue.add(jobName(data), data, { jobId: jobId(data) })));
+
       return res.redirect(`${settingsUrl}?integration_connected=mercado_livre`);
     } catch (error) {
       // Nunca repassa a mensagem de erro crua na URL (pode vazar detalhe

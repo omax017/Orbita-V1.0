@@ -18,6 +18,14 @@ export interface SyncSingleOrderJobData {
   externalOrderId: string;
 }
 
+/** Sincroniza (pull) os anúncios de uma conta inteira — sem isso, `Listing`
+ * nunca é populada e "anúncios ativos" fica sempre 0 na tela de Integrações
+ * (bug real encontrado em produção: só pedidos eram sincronizados). */
+export interface SyncAccountListingsJobData {
+  type: "SYNC_ACCOUNT_LISTINGS";
+  marketplaceAccountId: string;
+}
+
 /** Renova o access token usando o refresh token guardado — enfileirado
  * proativamente pelo job `refresh-tokens` antes do token expirar. */
 export interface RefreshTokenJobData {
@@ -28,6 +36,7 @@ export interface RefreshTokenJobData {
 export type MarketplaceSyncJobData =
   | SyncAccountOrdersJobData
   | SyncSingleOrderJobData
+  | SyncAccountListingsJobData
   | RefreshTokenJobData;
 
 /** Nome do job = o discriminador `type` — permite ver de relance no board do
@@ -46,6 +55,8 @@ export function jobId(data: MarketplaceSyncJobData): string {
       return `sync-account:${data.marketplaceAccountId}`;
     case "SYNC_SINGLE_ORDER":
       return `sync-order:${data.marketplaceAccountId}:${data.externalOrderId}`;
+    case "SYNC_ACCOUNT_LISTINGS":
+      return `sync-listings:${data.marketplaceAccountId}`;
     case "REFRESH_TOKEN":
       return `refresh-token:${data.marketplaceAccountId}`;
   }
