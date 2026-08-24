@@ -751,3 +751,21 @@ A aba "Anúncios sem SKU" dentro do Estoque continua usando `MOCK_LISTINGS` — 
 ### 21.3 Verificação
 
 `type-check`/`lint` limpos em `@hubwin/api` e `@hubwin/web`. Testado no navegador com conta nova: Estoque abre com "0 SKU(s) cadastrado(s)" e "Nenhum SKU cadastrado" (confirma o pedido do usuário — zerado por padrão); cadastrado 1 SKU de teste via "Novo SKU" → aparece na tabela; removido via botão de lixeira → some; **recarregada a página** → continua em 0 (confirma que é persistência real no Postgres, não só estado local em memória).
+
+## 22. Landing page pública (antes da tela de login)
+
+Antes desta etapa, `/` só existia como redirect — sem sessão, o `middleware.ts` já mandava direto pra `/login` antes de qualquer coisa renderizar. Pedido do usuário: uma página de apresentação com a cara da marca, benefícios, ganchos, e um CTA de teste grátis por tempo limitado (BETA), no estilo do concorrente "Hunter Spy" mas com identidade e copy própria da Órbita — mesmo espírito da Pontuação de Oportunidade (Etapa 18): inspirado no concorrente, não copiado dele.
+
+### 22.1 `middleware.ts` — "/" vira rota pública
+
+`isPublicPath` agora inclui `pathname === "/"` (igualdade exata, não `startsWith` — todo path começa com "/", então um `startsWith("/")` tornaria a checagem inútil, marcando tudo como público). Quem já tem sessão continua nunca vendo a landing: o segundo `if` do middleware já redireciona `hasSession && isPublicPath` pro dashboard, e isso vale pra "/" igual vale pra "/login".
+
+### 22.2 `apps/web/features/marketing/landing-content.tsx`
+
+Server Component só (sem `"use client"` — nada na página precisa de estado no cliente; o FAQ usa `<details>`/`<summary>` nativos em vez de um Accordion com JS). Seções: header fixo, hero com CTA duplo + uma prévia estilizada do dashboard (sem números carimbados como se fossem estatística real — só ilustra o layout), grid de 6 benefícios (puxados de features que EXISTEM de verdade no produto, não inventadas pra marketing), "como funciona" em 3 passos, um destaque específico pra Pontuação de Oportunidade (Etapa 18 — o gancho mais forte contra o Hunter Spy), seção de planos reaproveitando `MOCK_PLANS` de Configurações → Planos **literal, sem duplicar dados** (pedido explícito do usuário: "os planos serão iguais"), FAQ, CTA final com o gradiente da marca, e rodapé.
+
+**Decisão deliberada de honestidade**: nenhum número de prova social inventado (nada de "+2.000 sellers", contador de clientes, depoimento fake) — o produto está genuinamente em BETA aberto sem base de usuários ainda, e fingir isso seria mentira na cara do visitante. A seção de planos já deixa claro que o teste é grátis e sem cartão, o que é verdade hoje (não existe cobrança real implementada em lugar nenhum do produto ainda — "Cobrança"/"Planos" em Configurações também são mockados).
+
+### 22.3 Verificação
+
+`type-check`/`lint` limpos. Testado no navegador: sessão de teste deslogada via `POST /auth/logout` (cookie httpOnly não dava pra limpar via `document.cookie` do JS, então usei o endpoint real), `/` renderiza a landing inteira (todas as 8 seções, os 3 planos com os preços reais de `MOCK_PLANS`, FAQ) sem nenhum erro no console. Sessão logada continua sendo redirecionada direto pro dashboard ao visitar "/", confirmando que o middleware não quebrou esse caminho.

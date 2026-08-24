@@ -24,7 +24,11 @@ const PUBLIC_PATHS = ["/login", "/register"];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = request.cookies.has(ACCESS_COOKIE);
-  const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  // "/" é a landing page (Etapa 22) — pública, mas por igualdade exata: sem
+  // isso, `startsWith` faria QUALQUER rota contar como pública (toda rota
+  // começa com "/"). Quem já tem sessão continua sendo mandado pro
+  // dashboard (segundo `if` abaixo), então usuário logado nunca vê a landing.
+  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
   if (!hasSession && !isPublicPath) {
     const url = request.nextUrl.clone();

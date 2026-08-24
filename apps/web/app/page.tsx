@@ -1,8 +1,10 @@
-import { redirect } from "next/navigation";
+import { LandingContent } from "@/features/marketing/landing-content";
 
-// A raiz nunca renderiza nada por si só — o middleware já manda quem não
-// tem sessão para /login antes disso, então na prática só usuários
-// autenticados chegam aqui (ex.: iOS PWA reabrindo em "/").
+// Landing page pública (Etapa 22) — antes disso a raiz só redirecionava
+// (pra /dashboard, via middleware.ts, que já manda quem não tem sessão pra
+// /login antes de chegar aqui). Quem JÁ tem sessão continua nunca vendo essa
+// página: o middleware redireciona `hasSession && isPublicPath` pro
+// dashboard antes do Next renderizar isso.
 export default function RootPage() {
-  redirect("/dashboard");
+  return <LandingContent />;
 }
