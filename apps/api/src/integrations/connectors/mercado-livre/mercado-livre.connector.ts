@@ -185,7 +185,7 @@ export class MercadoLivreConnector implements MarketplaceConnector {
     });
 
     // A busca só devolve IDs — precisa de "multiget" (`/items?ids=...`) pros detalhes.
-    const items = search.results.length > 0 ? await this.fetchItemsMultiget(search.results) : [];
+    const items = search.results.length > 0 ? await this.fetchItemsMultiget(search.results, credentials.accessToken) : [];
 
     const nextOffset = offset + search.results.length;
     const nextPage = nextOffset < search.paging.total ? String(nextOffset) : null;
@@ -193,7 +193,14 @@ export class MercadoLivreConnector implements MarketplaceConnector {
     return { items: items.map(mapListing), nextPage, total: search.paging.total };
   }
 
-  private async fetchItemsMultiget(ids: string[]): Promise<MlItem[]> {
+  /** Bug real achado sincronizando uma conta de verdade: essa chamada nunca
+   * mandava `accessToken` — o ML aceitava sem token até pouco tempo atrás,
+   * mas mudou a política (mesma mudança documentada em
+   * `DiscoveryService.tryFetchRealListing`, Etapa 20) e passou a devolver
+   * 401 pra `/items?ids=...` sem Bearer, quebrando a sincronização de
+   * anúncios inteira (`Erro: Mercado Livre API respondeu 401 para
+   * .../items`, visível em `lastSyncError` na tela de Integrações). */
+  private async fetchItemsMultiget(ids: string[], accessToken: string): Promise<MlItem[]> {
     // /items?ids=... aceita até 20 IDs por chamada.
     const chunks: string[][] = [];
     for (let i = 0; i < ids.length; i += 20) chunks.push(ids.slice(i, i + 20));
@@ -201,6 +208,7 @@ export class MercadoLivreConnector implements MarketplaceConnector {
     const results = await Promise.all(
       chunks.map((chunk) =>
         mlFetch<Array<{ code: number; body: MlItem }>>(`${ML_API_BASE}/items`, {
+          accessToken,
           searchParams: { ids: chunk.join(",") },
         }),
       ),
