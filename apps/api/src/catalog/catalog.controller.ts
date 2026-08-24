@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { WorkspaceGuard } from "../auth/guards/workspace.guard";
 import { CurrentWorkspace, CurrentWorkspacePayload } from "../auth/decorators/current-workspace.decorator";
@@ -35,6 +35,12 @@ export class CatalogController {
   @Patch(":id")
   update(@CurrentWorkspace() workspace: CurrentWorkspacePayload, @Param("id") id: string, @Body() dto: UpdateSkuDto) {
     return this.catalog.update(workspace.workspaceId, id, dto);
+  }
+
+  @Delete(":id")
+  @HttpCode(204)
+  remove(@CurrentWorkspace() workspace: CurrentWorkspacePayload, @Param("id") id: string) {
+    return this.catalog.remove(workspace.workspaceId, id);
   }
 
   @Post(":id/link-listing")

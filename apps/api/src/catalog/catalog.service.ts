@@ -83,6 +83,16 @@ export class CatalogService {
     });
   }
 
+  /** Hard delete de verdade (não soft delete) — seguro porque `OrderItem.sku`
+   * usa `onDelete: SetNull` (pedidos já sincronizados preservam o histórico,
+   * só perdem o vínculo de custo daqui pra frente) e `ListingSku.sku` usa
+   * `onDelete: Cascade` (o vínculo com anúncios some junto, correto — não
+   * faz sentido um vínculo apontando pra um SKU que não existe mais). */
+  async remove(workspaceId: string, id: string): Promise<void> {
+    await this.findOne(workspaceId, id); // 404 antes de tentar remover
+    await this.prisma.sku.delete({ where: { id } });
+  }
+
   /** Vincula (ou confirma o vínculo já existente) de um Sku a um anúncio —
    * resolve `Listing` por `(marketplaceAccountId, externalListingId)`, então
    * precisa que a conta já esteja sincronizada (Etapa 9) e o anúncio já

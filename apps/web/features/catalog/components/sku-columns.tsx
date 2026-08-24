@@ -1,4 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { computeStockHealth, countLinkedListings, type MockSku } from "../types";
 import { StockHealthBadge } from "./stock-health-badge";
@@ -9,9 +11,10 @@ export interface SkuColumnsOptions {
   hideValues: boolean;
   listings: Array<{ skuCode: string | null }>;
   stockView: "local" | "full";
+  onDelete: (sku: MockSku) => void;
 }
 
-export function buildSkuColumns({ hideValues, listings, stockView }: SkuColumnsOptions): ColumnDef<MockSku>[] {
+export function buildSkuColumns({ hideValues, listings, stockView, onDelete }: SkuColumnsOptions): ColumnDef<MockSku>[] {
   return [
     {
       accessorKey: "code",
@@ -56,6 +59,22 @@ export function buildSkuColumns({ hideValues, listings, stockView }: SkuColumnsO
       header: "Anúncios vinculados",
       accessorFn: (sku) => countLinkedListings(sku.code, listings),
       cell: ({ row }) => `${countLinkedListings(row.original.code, listings)} anúncio(s)`,
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          aria-label={`Remover ${row.original.name}`}
+          onClick={() => onDelete(row.original)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+      meta: { exportable: false },
     },
   ];
 }

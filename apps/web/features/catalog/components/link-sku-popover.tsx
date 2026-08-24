@@ -13,6 +13,10 @@ export interface LinkSkuPopoverProps {
   itemTitle: string;
   onLink: (sku: MockSku) => void;
   triggerLabel?: string;
+  /** Catálogo pra buscar — `MOCK_SKUS` por padrão (Pedidos e Anúncios ainda
+   * não estão ligados ao backend real). O Estoque (já real, Etapa 21) passa
+   * o catálogo de verdade do workspace aqui. */
+  skus?: MockSku[];
 }
 
 /**
@@ -21,11 +25,11 @@ export interface LinkSkuPopoverProps {
  * memória); a persistência real é lógica de página futura (módulo Estoque).
  * Compartilhado entre Pedidos e Anúncios — mesma ação, mesmo catálogo.
  */
-export function LinkSkuPopover({ itemTitle, onLink, triggerLabel = "Vincular" }: LinkSkuPopoverProps) {
+export function LinkSkuPopover({ itemTitle, onLink, triggerLabel = "Vincular", skus = MOCK_SKUS }: LinkSkuPopoverProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const results = MOCK_SKUS.filter((sku) =>
+  const results = skus.filter((sku) =>
     sku.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
 

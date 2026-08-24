@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Boxes, Download, Eye, EyeOff, Package, TrendingUp, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -10,7 +10,7 @@ import { exportRowsToCsv } from "@/lib/export-csv";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { MOCK_LISTINGS } from "@/features/listings/mock-data";
 import type { MockListing } from "@/features/listings/types";
-import { MOCK_SKUS } from "./mock-data";
+import { createSku, deleteSku, fetchSkus } from "./api";
 import { computeStockHealth, type MockSku } from "./types";
 import { computeCatalogKpis } from "./kpis";
 import { buildSkuColumns } from "./components/sku-columns";
@@ -24,12 +24,38 @@ import { CompareByDatePopover } from "./components/compare-by-date-popover";
 // snapshot histórico real de estoque ainda (ver comentário no popover).
 const MOCK_COMPARISON_DELTAS = { units: 4.2, cost: -2.8, payout: 6.1, profit: 9.4 };
 
-export function CatalogContent() {
-  const [skus, setSkus] = useState<MockSku[]>(MOCK_SKUS);
+export function CatalogContent({ workspaceId }: { workspaceId: string }) {
+  // SKUs são reais desde a Etapa 21 (`GET/POST/DELETE /catalog/skus`) — cada
+  // workspace começa vazio de verdade, sem os "produtos de demonstração" que
+  // apareciam pra toda conta nova antes disso (bug real: eram dados
+  // mockados no estado local do React, nunca vinham do banco).
+  //
+  // `listings` (a aba "Anúncios sem SKU") CONTINUA mockada — ainda não existe
+  // `GET /listings` no backend (só a sincronização grava a tabela, ninguém
+  // lê ainda). Fica registrado aqui de propósito, não é descuido.
+  const [skus, setSkus] = useState<MockSku[]>([]);
+  const [loadingSkus, setLoadingSkus] = useState(true);
   const [listings, setListings] = useState<MockListing[]>(MOCK_LISTINGS);
   const [hideValues, setHideValues] = useState(false);
   const [stockView, setStockView] = useState<"local" | "full">("local");
   const [compareDate, setCompareDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSkus(workspaceId)
+      .then((data) => {
+        if (!cancelled) setSkus(data);
+      })
+      .catch(() => {
+        if (!cancelled) setSkus([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSkus(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId]);
 
   const kpis = useMemo(() => computeCatalogKpis(skus, listings, stockView), [skus, listings, stockView]);
 
@@ -41,9 +67,20 @@ export function CatalogContent() {
 
   const missingSkuListings = useMemo(() => listings.filter((l) => l.skuCode === null), [listings]);
 
+  async function handleDeleteSku(sku: MockSku) {
+    if (!window.confirm(`Remover "${sku.name}" (${sku.code}) do catálogo? Essa ação não pode ser desfeita.`)) return;
+    const previous = skus;
+    setSkus((prev) => prev.filter((s) => s.id !== sku.id)); // otimista
+    try {
+      await deleteSku(workspaceId, sku.id);
+    } catch {
+      setSkus(previous); // reverte se a API falhar
+    }
+  }
+
   const skuColumns = useMemo(
-    () => buildSkuColumns({ hideValues, listings, stockView }),
-    [hideValues, listings, stockView],
+    () => buildSkuColumns({ hideValues, listings, stockView, onDelete: handleDeleteSku }),
+    [hideValues, listings, stockView, skus],
   );
 
   function handleLinkSkuFromListing(listingId: string, sku: MockSku) {
@@ -53,11 +90,15 @@ export function CatalogContent() {
   }
 
   const missingSkuColumns = useMemo(
-    () => buildMissingSkuColumns({ onLink: handleLinkSkuFromListing }),
-    [],
+    () => buildMissingSkuColumns({ onLink: handleLinkSkuFromListing, skus }),
+    [skus],
   );
 
-  function handleCreateSku(sku: MockSku, linkedListingIds: string[]) {
+  async function handleCreateSku(
+    input: Pick<MockSku, "code" | "name" | "costAmount" | "packagingCostAmount" | "stockLocal" | "stockFull">,
+    linkedListingIds: string[],
+  ) {
+    const sku = await createSku(workspaceId, input);
     setSkus((prev) => [sku, ...prev]);
     if (linkedListingIds.length > 0) {
       setListings((prev) =>
@@ -187,12 +228,16 @@ export function CatalogContent() {
           <TabsTrigger value="missing">Anúncios sem SKU ({missingSkuListings.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="skus">
-          <DataTable
-            columns={skuColumns}
-            data={skus}
-            exportFilename="meus-skus"
-            emptyState={{ icon: Boxes, title: "Nenhum SKU cadastrado" }}
-          />
+          {loadingSkus ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Carregando…</p>
+          ) : (
+            <DataTable
+              columns={skuColumns}
+              data={skus}
+              exportFilename="meus-skus"
+              emptyState={{ icon: Boxes, title: "Nenhum SKU cadastrado", description: "Clique em \"Novo SKU\" pra cadastrar seu primeiro produto." }}
+            />
+          )}
         </TabsContent>
         <TabsContent value="missing">
           <DataTable

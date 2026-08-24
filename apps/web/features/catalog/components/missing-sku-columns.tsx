@@ -7,9 +7,10 @@ import type { MockSku } from "../types";
 
 export interface MissingSkuColumnsOptions {
   onLink: (listingId: string, sku: MockSku) => void;
+  skus: MockSku[];
 }
 
-export function buildMissingSkuColumns({ onLink }: MissingSkuColumnsOptions): ColumnDef<MockListing>[] {
+export function buildMissingSkuColumns({ onLink, skus }: MissingSkuColumnsOptions): ColumnDef<MockListing>[] {
   return [
     {
       accessorKey: "title",
@@ -42,7 +43,7 @@ export function buildMissingSkuColumns({ onLink }: MissingSkuColumnsOptions): Co
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <LinkSkuPopover itemTitle={row.original.title} onLink={(sku) => onLink(row.original.id, sku)} />
+        <LinkSkuPopover itemTitle={row.original.title} onLink={(sku) => onLink(row.original.id, sku)} skus={skus} />
       ),
       meta: { exportable: false },
     },

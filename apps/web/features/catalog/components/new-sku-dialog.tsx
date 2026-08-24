@@ -21,10 +21,11 @@ import type { MockSku } from "../types";
 export interface NewSkuDialogProps {
   listings: MockListing[];
   existingCodes: string[];
-  onCreate: (sku: MockSku, linkedListingIds: string[]) => void;
+  /** Assíncrono desde a Etapa 21 (cria de verdade via `POST /catalog/skus`)
+   * — pode rejeitar (código duplicado, rede etc.); o diálogo só fecha se
+   * resolver, e mostra `error.message` se rejeitar. */
+  onCreate: (sku: Pick<MockSku, "code" | "name" | "costAmount" | "packagingCostAmount" | "stockLocal" | "stockFull">, linkedListingIds: string[]) => Promise<void>;
 }
-
-const IMAGE_COLORS = ["bg-chart-1/20", "bg-chart-2/20", "bg-chart-3/20", "bg-chart-4/20", "bg-chart-5/20"];
 
 /** "Novo SKU" — cadastro completo, incluindo o vínculo N:N com anúncios (ListingSku). */
 export function NewSkuDialog({ listings, existingCodes, onCreate }: NewSkuDialogProps) {
@@ -37,6 +38,7 @@ export function NewSkuDialog({ listings, existingCodes, onCreate }: NewSkuDialog
   const [stockFull, setStockFull] = useState("");
   const [linkedIds, setLinkedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function reset() {
     setCode("");
@@ -58,7 +60,7 @@ export function NewSkuDialog({ listings, existingCodes, onCreate }: NewSkuDialog
     });
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmedCode = code.trim().toUpperCase();
 
@@ -71,22 +73,27 @@ export function NewSkuDialog({ listings, existingCodes, onCreate }: NewSkuDialog
       return;
     }
 
-    const sku: MockSku = {
-      id: `sku_${Date.now()}`,
-      code: trimmedCode,
-      name: name.trim(),
-      costAmount: Number(costAmount.replace(",", ".")) || 0,
-      packagingCostAmount: Number(packagingCostAmount.replace(",", ".")) || 0,
-      stockLocal: Number(stockLocal) || 0,
-      stockFull: Number(stockFull) || 0,
-      lowStockThreshold: 10,
-      imageColor: IMAGE_COLORS[Math.floor(Math.random() * IMAGE_COLORS.length)]!,
-      active: true,
-    };
-
-    onCreate(sku, Array.from(linkedIds));
-    setOpen(false);
-    reset();
+    setSaving(true);
+    setError(null);
+    try {
+      await onCreate(
+        {
+          code: trimmedCode,
+          name: name.trim(),
+          costAmount: Number(costAmount.replace(",", ".")) || 0,
+          packagingCostAmount: Number(packagingCostAmount.replace(",", ".")) || 0,
+          stockLocal: Number(stockLocal) || 0,
+          stockFull: Number(stockFull) || 0,
+        },
+        Array.from(linkedIds),
+      );
+      setOpen(false);
+      reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível cadastrar o SKU.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -159,10 +166,12 @@ export function NewSkuDialog({ listings, existingCodes, onCreate }: NewSkuDialog
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Cancelar
             </Button>
-            <Button type="submit">Cadastrar SKU</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Cadastrando…" : "Cadastrar SKU"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

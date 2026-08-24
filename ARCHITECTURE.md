@@ -707,3 +707,47 @@ Depois de aprovar a Pontuação de Oportunidade, o usuário pediu pra seguir com
 ### 19.3 Verificação
 
 `type-check`/`lint` limpos. Testado no navegador: `/descobrir/ferramentas` renderiza sem erro de hidratação nem exceção (confirmado lendo o console limpo numa aba nova, depois de identificar que os erros anteriores eram de compilações antigas do Fast Refresh), EAN gerado conferido manualmente (checksum bate: 12 dígitos `789185119118` → dígito verificador `3`, igual ao mostrado na tela). Filtro testado disparando uma busca real e clicando "Correios" via `dispatchEvent`/`click()`: tabela foi de 8 para 4 linhas, todas com logística "Correios".
+
+## 20. Análise de Anúncio real + dois bugs reais de sincronização (achados em produção)
+
+Depois que o usuário conectou uma conta real do Mercado Livre (Configurações → Integrações), três problemas apareceram testando de verdade contra produção — nenhum visível em `type-check`/`lint`, só rodando contra dados reais.
+
+### 20.1 Análise de Anúncio busca o item de verdade
+
+O usuário colou o link de um anúncio real e recebeu de volta um título genérico ("Kit Produto Analisado") — a tela nunca tinha feito coleta real (Etapa 7). Tentativas nessa ordem:
+
+1. **Scraping direto da página** — bloqueado pelo ML como "tráfego suspeito" (detecção anti-bot) já no primeiro request.
+2. **API pública de item sem token** (`GET api.mercadolibre.com/items/{id}`) — `403 PA_UNAUTHORIZED_RESULT_FROM_POLICIES`. O ML mudou essa política: hoje exige um Bearer token válido mesmo pra item público de outro vendedor.
+3. **API de item COM token de uma conta conectada** — funciona. `DiscoveryService.tryFetchRealListing()` (`apps/api/src/discovery/discovery.service.ts`) extrai o `MLB<id>` da URL por regex, busca qualquer conta `MERCADO_LIVRE` conectada do workspace (não precisa ser a dona do anúncio), renova o token se estiver perto de expirar, e chama `GET /items/{id}` + `GET /users/{seller_id}` direto (`mlFetch`, sem passar pelo `MarketplaceConnector` — código deliberadamente solto, mesmo racional do resto do `DiscoveryService`: descartável, vai ser substituído quando existir coleta de verdade pra outras telas).
+
+**Limite real, documentado na UI**: título/preço/imagem/vendedor vêm reais; vendas/visitas/conversão de 30 dias continuam GERADOS — a API do ML não expõe essas métricas pra anúncio de outro vendedor, só pro dono logado. O card mostra um selo "Dados reais" e uma nota explicando exatamente essa fronteira.
+
+### 20.2 Bug real: `Listing` nunca era sincronizada
+
+"Sincronizar" numa conta conectada só enfileirava `SYNC_ACCOUNT_ORDERS` — nunca existiu job pra anúncios, então `Listing` ficava sempre vazia e "anúncios ativos" travado em 0 pra sempre, mesmo sincronizando repetidamente (e pedidos de itens sem `Listing` nunca resolviam custo/SKU, já que `resolveItemCost` depende dela existir). Corrigido: novo job `SYNC_ACCOUNT_LISTINGS` + `OrderSyncService.syncAccountListings()` (mesmo padrão de paginação/erro de `syncAccountOrders`), enfileirado junto com pedidos tanto no clique manual (`POST /integrations/accounts/:id/sync`) quanto — novo também — automaticamente no callback do OAuth (antes o primeiro sync exigia clique manual, apesar do comentário no código já prever isso).
+
+### 20.3 Bug real: BullMQ rejeita `:` no jobId
+
+Mesmo depois do fix acima, "Sincronizar" continuava dando 500 sem sincronizar nada. Causa raiz, achada lendo o log de runtime do Railway (não aparece em `type-check`/`lint`, nem em teste local sem fila real): `jobId()` (`apps/api/src/integrations/queues/marketplace-sync.types.ts`) usava `:` como separador (`sync-account:${id}`), e o **BullMQ recusa qualquer jobId customizado que contenha `:`** ("Error: Custom Id cannot contain :"). Isso quebrava TODO enfileiramento — inclusive o sync de pedidos, desde a Etapa 9, sempre, silenciosamente (a chamada dava 500, a tela só continuava em 0/0 sem mostrar nada). Trocado `:` por `-` em todos os padrões de jobId.
+
+### 20.4 Verificação
+
+`type-check`/`lint`/`build` limpos nas três correções. Análise de Anúncio testada com o link real do usuário (produto de decoração de cozinha) — título/preço/imagem batendo com o anúncio de verdade, selo "Dados reais" visível. Sincronização testada disparando "Sincronizar" na conta real conectada; diagnosticado via Railway Deploy Logs (não local) — o erro `Custom Id cannot contain :` só aparece com Redis/BullMQ de produção processando o job de verdade, por isso não foi pego antes de testar em produção.
+
+## 21. Estoque conectado ao backend real (contas novas começam vazias)
+
+Usuário reportou "diversos cadastros de produtos que não consigo remover" — a tela de Estoque (`apps/web/features/catalog/catalog-content.tsx`) nunca tinha sido conectada ao backend real de Catálogo (que existe desde a Etapa 16.1): o `useState(MOCK_SKUS)` inicializava toda conta, de qualquer workspace, com os mesmos 8 produtos de demonstração fixos, "deletar" só filtrava o estado local (voltavam ao recarregar a página).
+
+### 21.1 O que mudou
+
+- **Backend**: `DELETE /catalog/skus/:id` (não existia — só create/update/list). Hard delete de verdade: seguro porque `OrderItem.sku` usa `onDelete: SetNull` (pedido já sincronizado preserva histórico, só perde o vínculo de custo daqui pra frente) e `ListingSku.sku` usa `onDelete: Cascade` (vínculo com anúncio some junto, correto).
+- **Frontend**: `catalog-content.tsx` busca (`GET /catalog/skus`), cria (`POST`) e remove (`DELETE`) de verdade via `apps/web/features/catalog/api.ts` — `NewSkuDialog.onCreate` virou assíncrono (aguarda a API antes de fechar o diálogo, mostra erro sem fechar se falhar); exclusão é otimista (some da tela na hora, reverte se a API falhar) com confirmação nativa (`window.confirm`) antes.
+- `LinkSkuPopover` (compartilhado com Pedidos e Anúncios, que continuam mockados) ganhou um prop opcional `skus` — o Estoque passa o catálogo real, os outros dois continuam usando `MOCK_SKUS` por padrão, sem quebrar nada.
+
+### 21.2 O que continua mockado (de propósito, não descuido)
+
+A aba "Anúncios sem SKU" dentro do Estoque continua usando `MOCK_LISTINGS` — não existe `GET /listings` no backend ainda (só a sincronização escreve na tabela `Listing`, ninguém lê pra fora). Os módulos Pedidos e Anúncios → Listagem/Catálogos/Rankeamento também continuam 100% mockados — escopo maior, fica pra uma etapa dedicada.
+
+### 21.3 Verificação
+
+`type-check`/`lint` limpos em `@hubwin/api` e `@hubwin/web`. Testado no navegador com conta nova: Estoque abre com "0 SKU(s) cadastrado(s)" e "Nenhum SKU cadastrado" (confirma o pedido do usuário — zerado por padrão); cadastrado 1 SKU de teste via "Novo SKU" → aparece na tabela; removido via botão de lixeira → some; **recarregada a página** → continua em 0 (confirma que é persistência real no Postgres, não só estado local em memória).
